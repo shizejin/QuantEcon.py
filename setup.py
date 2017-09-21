@@ -92,6 +92,7 @@ CLASSIFIERS = [
 setup(name='quantecon',
       packages=['quantecon',
                 'quantecon.game_theory',
+                'quantecon.game_theory.game_generators',
                 'quantecon.markov',
                 'quantecon.random',
                 'quantecon.tests',
@@ -107,6 +108,6 @@ setup(name='quantecon',
       author='Thomas J. Sargent and John Stachurski (Project coordinators)',
       author_email='john.stachurski@gmail.com',
       url='https://github.com/QuantEcon/QuantEcon.py',  # URL to the repo
-      download_url='https://github.com/QuantEcon/QuantEcon.py/tarball/' + VERSION, 
+      download_url='https://github.com/QuantEcon/QuantEcon.py/tarball/' + VERSION,
       keywords=['quantitative', 'economics']
       )
