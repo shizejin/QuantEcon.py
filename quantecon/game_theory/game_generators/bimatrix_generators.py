@@ -7,7 +7,10 @@ the 2-player games studied by Fearnley, Igwe, and Savani (2015):
   where opposing parties have asymmetric and heterogeneous battlefield
   valuations.
 
-* Ranking Games (`ranking_game`)
+* Ranking Games (`ranking_game`): These games were introduced by Goldberg,
+  Goldberg, Krysta, and Ventre (2013) because of (i) they are important
+  and well-motivated games by Economics literature and (ii) their
+  computational complexity.
 
 * SGC Games (`sgc_game`): These games were introduced by Sandholm,
   Gilpin, and Conitzer (2005) as a worst case scenario for support
@@ -27,6 +30,9 @@ References
 * J. Fearnley, T. P. Igwe, R. Savani, "An Empirical Study of Finding
   Approximate Equilibria in Bimatrix Games," International Symposium on
   Experimental Algorithms (SEA), 2015.
+
+* L.A. Goldberg, P.W. Goldberg, P. Krysta, and C. Ventre, "Ranking Games that
+  have Competitiveness-based Strategies", Theoretical Computer Science, 2013
 
 * R. Hortala-Vallve and A. Llorente-Saguer, "Pure Strategy Nash
   Equilibria in Non-Zero Sum Colonel Blotto Games", International
@@ -155,6 +161,100 @@ def _populate_blotto_payoff_arrays(payoff_arrays, actions, values):
                     payoffs[winner] += values[k, winner]
             payoff_arrays[0][i, j], payoff_arrays[1][j, i] = payoffs
 
+def ranking_game(n, steps=10, random_state=None):
+    """
+    Return a NormalFormGame instance of the 2-player game introduced by
+    Goldberg, Goldberg, Krysta, and Ventre (2013) where each player chooses
+    an effort level associated with a score and a cost which are both increasing
+    functions with randomly generated step sizes.
+
+    Parameters
+    ----------
+    n : scalar(int)
+        Positive integer determining the number of actions, i.e, effort levels.
+    steps : scalar(int), optional
+   		Maximal of random steps for generating scores and costs for each player.
+   		If None, maximal number of steps is set to be 10 following Fearnley, Igwe,
+   		and Savani (2015).
+    random_state : int or np.random.RandomState, optional
+        Random seed (integer) or np.random.RandomState instance to set
+        the initial state of the random number generator for
+        reproducibility. If None, a randomly initialized RandomState is
+        used.
+
+    Returns
+    -------
+    g : NormalFormGame
+
+    Examples
+    --------
+    >>> g = ranking_game(5, random_state=1234)
+    >>> g.players[0]
+    Player([[ 0.  ,  0.  ,  0.  ,  0.  ,  0.  ],
+            [ 0.82, -0.18, -0.18, -0.18, -0.18],
+            [ 0.8 ,  0.8 , -0.2 , -0.2 , -0.2 ],
+            [ 0.68,  0.68,  0.68, -0.32, -0.32],
+            [ 0.66,  0.66,  0.66,  0.66, -0.34]])
+    >>> g.players[1]
+    Player([[ 1.  ,  0.  ,  0.  ,  0.  ,  0.  ],
+            [ 0.8 ,  0.8 , -0.2 , -0.2 , -0.2 ],
+            [ 0.66,  0.66,  0.66, -0.34, -0.34],
+            [ 0.6 ,  0.6 ,  0.6 ,  0.6 , -0.4 ],
+            [ 0.58,  0.58,  0.58,  0.58,  0.58]])
+
+    """
+    payoff_arrays = tuple(np.zeros((n, n)) for i in range(2))
+    random_state = check_random_state(random_state)
+
+    scores = random_state.randint(steps, size=(2,n)) + 1
+    scores = np.cumsum(scores, axis=1)
+
+    costs = np.empty((2, n))
+    costs[:, 0] = 0.
+    costs[:, 1:] = random_state.randint(steps, size=(2,n-1)) + 1
+    costs[:, 1:] /= (n * steps)
+    costs = np.cumsum(costs, axis=1)
+
+    _populate_ranking_payoff_arrays(payoff_arrays, scores, costs)
+    g = NormalFormGame(
+        [Player(payoff_array) for payoff_array in payoff_arrays]
+    )
+
+    return g
+
+@jit(nopython=True)
+def _populate_ranking_payoff_arrays(payoff_arrays, scores, costs):
+    """
+    Populate the ndarrays in `payoff_arrays` with the payoff values of
+    the ranking game with scores and costs.
+
+    Parameters
+    ----------
+    payoff_arrays : tuple(ndarray(float, ndim=2))
+        Tuple of 2 ndarrays of shape (n, n). Modified in place.
+    scores : ndarray(float, ndim=2)
+    	The ndarray of shape (2, n) with values being scores corresponding
+    	to different effort levels and different players.
+    costs : ndarray(float, ndim=2)
+    	The ndarray of shape (2, n) with values being costs corresponding
+    	to different effort levels and different players.
+
+    """
+    n = payoff_arrays[0].shape[0]
+    for i in range(n):
+        for j in range(n):
+            if scores[0, i] > scores[1, j]:
+                payoff_arrays[0][i, j] += 1
+            elif scores[0, i] < scores[1, j]:
+                payoff_arrays[1][j, i] += 1
+            else:
+                payoff_arrays[0][i, j] += 0.5
+                payoff_arrays[1][j, i] += 0.5
+
+            payoff_arrays[0][i, j] -= costs[0, i]
+            payoff_arrays[1][j, i] -= costs[1, j]
+
+    return payoff_arrays
 
 def sgc_game(k):
     """

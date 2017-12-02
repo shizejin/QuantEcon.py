@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal
 from nose.tools import eq_, ok_
 from quantecon.gridtools import num_compositions
 
-from quantecon.game_theory import blotto_game, sgc_game
+from quantecon.game_theory import blotto_game, ranking_game, sgc_game
 
 
 class TestBlottoGame:
@@ -31,6 +31,35 @@ class TestBlottoGame:
         rho = -0.5
         g0 = blotto_game(h, T, rho, random_state=seed)
         g1 = blotto_game(h, T, rho, random_state=seed)
+        for i in range(self.g.N):
+            assert_array_equal(g0.players[i].payoff_array,
+                               g1.players[i].payoff_array)
+
+
+class TestRankingGame:
+    def setUp(self):
+        self.n = 100
+        self.g = ranking_game(self.n)
+        self.payoff0 = self.g.players[0].payoff_array
+        self.payoff1 = self.g.players[1].payoff_array
+
+    def test_size(self):
+        eq_(self.g.nums_actions, (self.n, self.n))
+
+    def test_weakly_decreasing_rowise_payoffs(self):
+        ok_((self.payoff0[:, 1:-1] >= self.payoff0[:, 2:]).all())
+        ok_((self.payoff1[:, 1:-1] >= self.payoff1[:, 2:]).all())
+
+    def test_elements_first_row(self):
+        ok_((self.payoff0[0, 0] + self.payoff1[0, 0]) == 1.)
+        ok_(all([payoff in [0, 1, 0.5] for payoff in self.payoff0[0, :]]))
+        ok_(all([payoff in [0, 1, 0.5] for payoff in self.payoff1[0, :]]))
+
+    def test_seed(self):
+        seed = 0
+        n = 100
+        g0 = ranking_game(n, random_state=seed)
+        g1 = ranking_game(n, random_state=seed)
         for i in range(self.g.N):
             assert_array_equal(g0.players[i].payoff_array,
                                g1.players[i].payoff_array)
