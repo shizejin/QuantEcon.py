@@ -161,21 +161,22 @@ def _populate_blotto_payoff_arrays(payoff_arrays, actions, values):
                     payoffs[winner] += values[k, winner]
             payoff_arrays[0][i, j], payoff_arrays[1][j, i] = payoffs
 
+
 def ranking_game(n, steps=10, random_state=None):
     """
     Return a NormalFormGame instance of the 2-player game introduced by
     Goldberg, Goldberg, Krysta, and Ventre (2013) where each player chooses
-    an effort level associated with a score and a cost which are both increasing
-    functions with randomly generated step sizes.
+    an effort level associated with a score and a cost which are both
+    increasing functions with randomly generated step sizes.
 
     Parameters
     ----------
     n : scalar(int)
         Positive integer determining the number of actions, i.e, effort levels.
     steps : scalar(int), optional
-   		Maximal of random steps for generating scores and costs for each player.
-   		If None, maximal number of steps is set to be 10 following Fearnley, Igwe,
-   		and Savani (2015).
+        Maximal of random steps for generating scores and costs for Each
+        player. If None, maximal number of steps is set to be 10 following
+        Fearnley, Igwe, and Savani (2015).
     random_state : int or np.random.RandomState, optional
         Random seed (integer) or np.random.RandomState instance to set
         the initial state of the random number generator for
@@ -206,12 +207,12 @@ def ranking_game(n, steps=10, random_state=None):
     payoff_arrays = tuple(np.zeros((n, n)) for i in range(2))
     random_state = check_random_state(random_state)
 
-    scores = random_state.randint(steps, size=(2,n)) + 1
+    scores = random_state.randint(steps, size=(2, n)) + 1
     scores = np.cumsum(scores, axis=1)
 
     costs = np.empty((2, n))
     costs[:, 0] = 0.
-    costs[:, 1:] = random_state.randint(steps, size=(2,n-1)) + 1
+    costs[:, 1:] = random_state.randint(steps, size=(2, n-1)) + 1
     costs[:, 1:] /= (n * steps)
     costs = np.cumsum(costs, axis=1)
 
@@ -221,6 +222,7 @@ def ranking_game(n, steps=10, random_state=None):
     )
 
     return g
+
 
 @jit(nopython=True)
 def _populate_ranking_payoff_arrays(payoff_arrays, scores, costs):
@@ -233,11 +235,11 @@ def _populate_ranking_payoff_arrays(payoff_arrays, scores, costs):
     payoff_arrays : tuple(ndarray(float, ndim=2))
         Tuple of 2 ndarrays of shape (n, n). Modified in place.
     scores : ndarray(float, ndim=2)
-    	The ndarray of shape (2, n) with values being scores corresponding
-    	to different effort levels and different players.
+        The ndarray of shape (2, n) with values being scores corresponding
+        to different effort levels and different players.
     costs : ndarray(float, ndim=2)
-    	The ndarray of shape (2, n) with values being costs corresponding
-    	to different effort levels and different players.
+        The ndarray of shape (2, n) with values being costs corresponding
+        to different effort levels and different players.
 
     """
     n = payoff_arrays[0].shape[0]
@@ -254,7 +256,6 @@ def _populate_ranking_payoff_arrays(payoff_arrays, scores, costs):
             payoff_arrays[0][i, j] -= costs[0, i]
             payoff_arrays[1][j, i] -= costs[1, j]
 
-    return payoff_arrays
 
 def sgc_game(k):
     """
